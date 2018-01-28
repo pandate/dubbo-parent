@@ -96,7 +96,13 @@ public class ExtensionLoader<T> {
     private ExtensionLoader(Class<?> type) {
         this.type = type;
         //判断当前扩展点的类型是否为ExtensionFactory，否则利用扩展实现获取ExtensionFactory放入objectFactory中
-        objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
+        if(type == ExtensionFactory.class){
+            objectFactory =null;
+        }else{
+            ExtensionLoader<ExtensionFactory> extensionLoader = ExtensionLoader.getExtensionLoader(ExtensionFactory.class);
+            objectFactory = extensionLoader.getAdaptiveExtension();
+        }
+
     }
 
     private static <T> boolean withExtensionAnnotation(Class<T> type) {
@@ -287,11 +293,14 @@ public class ExtensionLoader<T> {
         return Collections.unmodifiableSet(new TreeSet<String>(cachedInstances.keySet()));
     }
 
+
+
     /**
-     * Find the extension with the given name. If the specified name is not found, then {@link IllegalStateException}
-     * will be thrown.
+     * 从cachedInstances缓存中获取name对应的实例,如果没有,通过createExtension(name)创建,之后放入缓存
+     * getExtension(String name)
+     * --createExtension(String name)
+     * ----injectExtension(T instance)
      */
-    //根据名称获取扩展实现
     @SuppressWarnings("unchecked")
     public T getExtension(String name) {
         if (name == null || name.length() == 0)
@@ -487,16 +496,18 @@ public class ExtensionLoader<T> {
         }
         return new IllegalStateException(buf.toString());
     }
-    //根据名称创建扩展实现
+    /**
+     * 根据名称创建扩展实现
+     */
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
-        //根据name获取扩展实现类
+        //从扫描到的扩展类中根据name获取具体扩展实现类
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
         }
         try {
-            //从缓存中获取接口对象，不存在则实例化一个
+            //从缓存中获取接口实现对象，不存在则实例化一个
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, (T) clazz.newInstance());
@@ -517,6 +528,7 @@ public class ExtensionLoader<T> {
                     type + ")  could not be instantiated: " + t.getMessage(), t);
         }
     }
+
     //为适配器类的setter方法注入其他扩展点或实现bean
     private T injectExtension(T instance) {
         try {
@@ -599,7 +611,19 @@ public class ExtensionLoader<T> {
         loadFile(extensionClasses, SERVICES_DIRECTORY);
         return extensionClasses;
     }
-    //从指定路径加载扩展实现
+    /**
+     * 1 加载dir目录下的指定type名称的文件
+     * 2 遍历该文件中的每一行
+     * (1)获取实现类key和value, 例如 name=spi, line=com.alibaba.dubbo.common.extension.factory.SpiExtensionFactory
+     * (2)根据line创建Class对象
+     * (3)将具有@Adaptive注解的实现类的Class对象放在cachedAdaptiveClass缓存中, 注意该缓存只能存放一个具有@Adaptive注解的实现类的Class对象,如果有两个满足条件,则抛异常
+     * 下面的都是对不含@Adaptive注解的实现类的Class对象:
+     * (4)查看是否具有含有一个type入参的构造器, 如果有（就是wrapper类）, 将当前的Class对象放置到cachedWrapperClasses缓存中
+     * (5)如果没有含有一个type入参的构造器, 获取无参构造器. 如果Class对象具有@Active注解, 将该对象以<实现类的key, active>存储起来
+     * (6)最后,将<Class对象, 实现类的key>存入cachedNames缓存,并将这些Class存入extensionClasses中.
+     * @param extensionClasses
+     * @param dir
+     */
     private void loadFile(Map<String, Class<?>> extensionClasses, String dir) {
         String fileName = dir + type.getName();
         try {
@@ -730,7 +754,20 @@ public class ExtensionLoader<T> {
         return extension.value();
     }
 
-    //创建适配对象
+    /**
+     * 创建适配对象
+     * 调用层级
+     * createAdaptiveExtension()
+     * --getAdaptiveExtensionClass()
+     *   //从dubbo-spi配置文件中获取AdaptiveExtensionClass
+     *   --getExtensionClasses()
+     *     --loadExtensionClasses()
+     *       --loadFile(Map<String, Class<?>> extensionClasses, String dir)
+     *   //创建动态代理类
+     *   --createAdaptiveExtensionClass()
+     *
+     * --injectExtension(T instance)  //dubbo-ioc
+     */
     @SuppressWarnings("unchecked")
     private T createAdaptiveExtension() {
         try {

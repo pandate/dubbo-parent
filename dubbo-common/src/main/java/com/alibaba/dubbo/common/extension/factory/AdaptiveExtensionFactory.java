@@ -31,7 +31,9 @@ import java.util.List;
 public class AdaptiveExtensionFactory implements ExtensionFactory {
 
     private final List<ExtensionFactory> factories;
-
+    /**
+     * 遍历cachedClasses中缓存的extensionClasses的key,之后根据key来实例化对应的实现类,最后放置到EXTENSION_INSTANCES缓存中
+     */
     public AdaptiveExtensionFactory() {
         ExtensionLoader<ExtensionFactory> loader = ExtensionLoader.getExtensionLoader(ExtensionFactory.class);
         List<ExtensionFactory> list = new ArrayList<ExtensionFactory>();

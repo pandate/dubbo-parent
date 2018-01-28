@@ -404,4 +404,8 @@ public class ExtensionLoaderTest {
         Assert.assertTrue(list.get(1).getClass() == OrderActivateExtImpl1.class);
     }
 
+    @Test
+    public void myTest() throws Exception {
+
+    }
 }

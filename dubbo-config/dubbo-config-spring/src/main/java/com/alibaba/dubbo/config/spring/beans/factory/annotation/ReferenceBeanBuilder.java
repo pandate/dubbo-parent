@@ -71,7 +71,7 @@ class ReferenceBeanBuilder extends AbstractAnnotationConfigBeanBuilder<Reference
     private void configureConsumerConfig(Reference reference, ReferenceBean<?> referenceBean) {
 
         String consumerBeanName = reference.consumer();
-
+        //从spring容器中获取consumerConfig配置参数
         ConsumerConfig consumerConfig = getOptionalBean(applicationContext, consumerBeanName, ConsumerConfig.class);
 
         referenceBean.setConsumer(consumerConfig);
@@ -112,9 +112,9 @@ class ReferenceBeanBuilder extends AbstractAnnotationConfigBeanBuilder<Reference
     protected void postConfigureBean(Reference annotation, ReferenceBean bean) throws Exception {
 
         bean.setApplicationContext(applicationContext);
-
+        //配置接口类
         configureInterface(annotation, bean);
-
+        //配置consumerConfig
         configureConsumerConfig(annotation, bean);
 
         bean.afterPropertiesSet();

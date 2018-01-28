@@ -63,7 +63,7 @@ public class DubboConfigBindingBeanPostProcessor implements BeanPostProcessor {
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-
+        //替换bean属性
         if (beanName.equals(this.beanName)) {
             DataBinder dataBinder = new DataBinder(bean);
             // TODO ignore invalid fields by annotation attribute

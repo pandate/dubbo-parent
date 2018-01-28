@@ -76,7 +76,7 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
         Set<String> resolvedPackagesToScan = resolvePackagesToScan(packagesToScan);
-
+        //注册ServiceBean
         registerServiceBeans(resolvedPackagesToScan, registry);
 
     }
@@ -89,18 +89,18 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
      * @param registry       {@link BeanDefinitionRegistry}
      */
     private void registerServiceBeans(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
-
+        //创建dubbo类扫描器
         DubboClassPathBeanDefinitionScanner scanner =
                 new DubboClassPathBeanDefinitionScanner(registry, environment, resourceLoader);
-
+        //获取bean名称生成器
         BeanNameGenerator beanNameGenerator = resolveBeanNameGenerator(registry);
 
         scanner.setBeanNameGenerator(beanNameGenerator);
-
+        //扫描所有带Service注解的类
         scanner.addIncludeFilter(new AnnotationTypeFilter(Service.class));
 
         for (String packageToScan : packagesToScan) {
-
+            //扫描给定包及其子包
             Set<BeanDefinitionHolder> beanDefinitionHolders = scanner.doScan(packageToScan);
 
             if (CollectionUtils.isEmpty(beanDefinitionHolders)) {
@@ -116,7 +116,7 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
             }
 
             if (!CollectionUtils.isEmpty(beanDefinitionHolders)) {
-
+                //注册所有Service bean到spring容器中
                 for (BeanDefinitionHolder beanDefinitionHolder : beanDefinitionHolders) {
                     registerServiceBean(beanDefinitionHolder, registry);
                 }
@@ -151,6 +151,7 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
      * @see ConfigurationClassPostProcessor#processConfigBeanDefinitions
      * @since 2.5.8
      */
+    //bean名称生成器
     private BeanNameGenerator resolveBeanNameGenerator(BeanDefinitionRegistry registry) {
 
         BeanNameGenerator beanNameGenerator = null;
@@ -218,21 +219,20 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
      * @see BeanDefinition
      */
     private void registerServiceBean(BeanDefinitionHolder beanDefinitionHolder, BeanDefinitionRegistry registry) {
-
+        //使用反射获取Class
         Class<?> beanClass = resolveClass(beanDefinitionHolder);
 
         Service service = findAnnotation(beanClass, Service.class);
-
+        //根据实现类Class及service注解获取接口类
         Class<?> interfaceClass = resolveServiceInterfaceClass(beanClass, service);
 
         String beanName = beanDefinitionHolder.getBeanName();
-
+        //创建Service BeanDefinition
         AbstractBeanDefinition serviceBeanDefinition = buildServiceBeanDefinition(service, interfaceClass, beanName);
-
+        //注册Bean到spring容器中
         registerWithGeneratedName(serviceBeanDefinition, registry);
 
     }
-
     private Class<?> resolveServiceInterfaceClass(Class<?> annotatedServiceBeanClass, Service service) {
 
         Class<?> interfaceClass = service.interfaceClass();
@@ -297,8 +297,9 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
 
     private AbstractBeanDefinition buildServiceBeanDefinition(Service service, Class<?> interfaceClass,
                                                               String annotatedServiceBeanName) {
-
+        //创建ServiceBeand定义
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceBean.class)
+                //添加构造参数
                 .addConstructorArgValue(service)
                 // References "ref" property to annotated-@Service Bean
                 .addPropertyReference("ref", annotatedServiceBeanName)

@@ -52,11 +52,11 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-
+        //根据注解获取扫描包路径
         Set<String> packagesToScan = getPackagesToScan(importingClassMetadata);
-
+        // 根据指定路径用代理的方式实例化@Service标注的类并注册到spring
         registerServiceAnnotationBeanPostProcessor(packagesToScan, registry);
-
+        //注册ReferenceAnnotationBeanPostProcessor 到spring容器中
         registerReferenceAnnotationBeanPostProcessor(registry);
 
     }
@@ -69,8 +69,9 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
      * @since 2.5.8
      */
     private void registerServiceAnnotationBeanPostProcessor(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
-
+        //创建bean定义
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceAnnotationBeanPostProcessor.class);
+        //添加构造参数
         builder.addConstructorArgValue(packagesToScan);
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
@@ -85,7 +86,7 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
      */
     private void registerReferenceAnnotationBeanPostProcessor(BeanDefinitionRegistry registry) {
 
-        // Register @Reference Annotation Bean Processor
+        // 实现了对类属性自动装配的处理，效果同AutowiredAnnotationBeanPostProcessor后者就是@Autowired注解自动装配的实现
         BeanRegistrar.registerInfrastructureBean(registry,
                 ReferenceAnnotationBeanPostProcessor.BEAN_NAME, ReferenceAnnotationBeanPostProcessor.class);
 

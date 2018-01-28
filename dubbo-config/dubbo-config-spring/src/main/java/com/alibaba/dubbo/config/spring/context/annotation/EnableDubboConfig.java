@@ -32,6 +32,8 @@ import java.lang.annotation.*;
  * <li>{@link ProviderConfig} binding to property :  "dubbo.provider"</li>
  * <li>{@link ConsumerConfig} binding to property :  "dubbo.consumer"</li>
  * </ul>
+ *初始化dubbo容器
+ *
  *
  * @see EnableDubboConfigBinding
  * @see DubboConfigConfiguration

@@ -35,7 +35,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
+//注册dubbo配置bean到spring容器
 @EnableDubboConfig
+//扫描指定路径并实例化组件注册到spring容器中
 @DubboComponentScan
 public @interface EnableDubbo {
 

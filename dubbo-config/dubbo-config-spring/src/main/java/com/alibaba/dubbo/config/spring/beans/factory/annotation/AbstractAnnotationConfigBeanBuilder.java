@@ -64,11 +64,11 @@ abstract class AbstractAnnotationConfigBeanBuilder<A extends Annotation, B exten
      * @throws Exception
      */
     public final B build() throws Exception {
-
+        //校验
         checkDependencies();
-
+        //创建
         B bean = doBuild();
-
+        //配置bean
         configureBean(bean);
 
         if (logger.isInfoEnabled()) {
@@ -92,17 +92,17 @@ abstract class AbstractAnnotationConfigBeanBuilder<A extends Annotation, B exten
 
 
     protected void configureBean(B bean) throws Exception {
-
+        //配置bean之前。。。
         preConfigureBean(annotation, bean);
-
+        //配置注册中心信息
         configureRegistryConfigs(bean);
-
+        //配置监控信息
         configureMonitorConfig(bean);
-
+        //配置application信息
         configureApplicationConfig(bean);
-
+        //配置module信息
         configureModuleConfig(bean);
-
+        //配置完bean后。。。
         postConfigureBean(annotation, bean);
 
     }

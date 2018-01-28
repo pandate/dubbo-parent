@@ -64,7 +64,7 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
         registerBeanDefinitions(attributes, registry);
 
     }
-
+    //注册BeanDefinitions
     protected void registerBeanDefinitions(AnnotationAttributes attributes, BeanDefinitionRegistry registry) {
 
         String prefix = environment.resolvePlaceholders(attributes.getString("prefix"));
@@ -76,14 +76,14 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
         registerDubboConfigBeans(prefix, configClass, multiple, registry);
 
     }
-
+    //注册DubboConfig beans
     private void registerDubboConfigBeans(String prefix,
                                           Class<? extends AbstractConfig> configClass,
                                           boolean multiple,
                                           BeanDefinitionRegistry registry) {
-
+        //获取环境配置数据
         PropertySources propertySources = environment.getPropertySources();
-
+        //根据前缀获取属性
         Map<String, String> properties = getSubProperties(propertySources, prefix);
 
         if (CollectionUtils.isEmpty(properties)) {
@@ -93,22 +93,22 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
             }
             return;
         }
-
+        //根据multiple获取bean名称
         Set<String> beanNames = multiple ? resolveMultipleBeanNames(prefix, properties) :
                 Collections.singleton(resolveSingleBeanName(configClass, properties, registry));
 
         for (String beanName : beanNames) {
-
+            //注册DubboConfigBean 到spring容器中
             registerDubboConfigBean(beanName, configClass, registry);
 
             MutablePropertyValues propertyValues = resolveBeanPropertyValues(beanName, multiple, properties);
-
+            //注册DubboConfigBindingBean 代理
             registerDubboConfigBindingBeanPostProcessor(beanName, propertyValues, registry);
 
         }
 
     }
-
+    //注册DubboConfigBean 到spring容器中
     private void registerDubboConfigBean(String beanName, Class<? extends AbstractConfig> configClass,
                                          BeanDefinitionRegistry registry) {
 
@@ -124,14 +124,14 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
         }
 
     }
-
+    //注册bean的代理到spring容器中
     private void registerDubboConfigBindingBeanPostProcessor(String beanName, PropertyValues propertyValues,
                                                              BeanDefinitionRegistry registry) {
-
+        //创建Bean定义
         Class<?> processorClass = DubboConfigBindingBeanPostProcessor.class;
 
         BeanDefinitionBuilder builder = rootBeanDefinition(processorClass);
-
+        //添加构造参数
         builder.addConstructorArgValue(beanName).addConstructorArgValue(propertyValues);
 
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
@@ -185,7 +185,7 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
         this.environment = (ConfigurableEnvironment) environment;
 
     }
-
+    //生成多配置的bean名称
     private Set<String> resolveMultipleBeanNames(String prefix, Map<String, String> properties) {
 
         Set<String> beanNames = new LinkedHashSet<String>();
@@ -206,7 +206,7 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
         return beanNames;
 
     }
-
+    //生成单例的bean名称
     private String resolveSingleBeanName(Class<? extends AbstractConfig> configClass, Map<String, String> properties,
                                          BeanDefinitionRegistry registry) {
 

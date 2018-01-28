@@ -39,7 +39,7 @@ public class DubboConfigBindingsRegistrar implements ImportBeanDefinitionRegistr
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-
+        //获取EnableDubboConfigBindings的注解参数
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboConfigBindings.class.getName()));
 
@@ -49,7 +49,7 @@ public class DubboConfigBindingsRegistrar implements ImportBeanDefinitionRegistr
         registrar.setEnvironment(environment);
 
         for (AnnotationAttributes element : annotationAttributes) {
-
+            //注册Dubbo的配置到spring中
             registrar.registerBeanDefinitions(element, registry);
 
         }

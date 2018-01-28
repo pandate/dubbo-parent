@@ -30,6 +30,8 @@ import org.springframework.context.annotation.PropertySource;
 public class AnnotationProvider {
 
     public static void main(String[] args) throws Exception {
+        //@Configuration注解spring容器加载方式，用AnnotationConfigApplicationContext替换ClassPathXmlApplicationContext
+        //@Configuration标注在类上，相当于把该类作为spring的xml配置文件中的<beans>,配置spring容器应用上下文
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ProviderConfiguration.class);
         context.start();
         System.in.read();

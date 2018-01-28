@@ -107,7 +107,7 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
         ReflectionUtils.doWithFields(beanClass, new ReflectionUtils.FieldCallback() {
             @Override
             public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
-
+                //获取注解属性
                 Reference reference = getAnnotation(field, Reference.class);
 
                 if (reference != null) {
@@ -118,7 +118,7 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
                         }
                         return;
                     }
-
+                    //新增Reference属性
                     elements.add(new ReferenceFieldElement(field, reference));
                 }
 
@@ -182,7 +182,7 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
     private InjectionMetadata buildReferenceMetadata(final Class<?> beanClass) {
 
         final List<InjectionMetadata.InjectedElement> elements = new LinkedList<InjectionMetadata.InjectedElement>();
-
+        //获取属性的Referencedata对象
         elements.addAll(findFieldReferenceMetadata(beanClass));
 
         elements.addAll(findMethodReferenceMetadata(beanClass));
@@ -192,10 +192,11 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
     }
 
     private InjectionMetadata findReferenceMetadata(String beanName, Class<?> clazz, PropertyValues pvs) {
-        // Fall back to class name as cache key, for backwards compatibility with custom callers.
+        // 根据beanName或者className查找是否存在InjectionMetadata
         String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
         // Quick check on the concurrent map first, with minimal locking.
         InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
+        //查不到则创建一个
         if (InjectionMetadata.needsRefresh(metadata, clazz)) {
             synchronized (this.injectionMetadataCache) {
                 metadata = this.injectionMetadataCache.get(cacheKey);
@@ -204,6 +205,7 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
                         metadata.clear(pvs);
                     }
                     try {
+                        //创建injectionMetadata对象
                         metadata = buildReferenceMetadata(clazz);
                         this.injectionMetadataCache.put(cacheKey, metadata);
                     } catch (NoClassDefFoundError err) {
@@ -220,10 +222,11 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-
+    //类初始化的时候调用该方法自动装配属性
     @Override
     public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
         if (beanType != null) {
+            //获取InjectionMetadata对象
             InjectionMetadata metadata = findReferenceMetadata(beanName, beanType, null);
             metadata.checkConfigMembers(beanDefinition);
         }
@@ -305,13 +308,13 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
 
         @Override
         protected void inject(Object bean, String beanName, PropertyValues pvs) throws Throwable {
-
+            //获取字段的class类
             Class<?> referenceClass = field.getType();
-
+            //创建ReferenceBean对象
             Object referenceBean = buildReferenceBean(reference, referenceClass);
-
+            //当isAccessible()的结果是false时不允许通过反射访问该字段，需要将Accessible设置为true
             ReflectionUtils.makeAccessible(field);
-
+            //反射注入值 这里的referenceBean是Invoker转化的代理接口
             field.set(bean, referenceBean);
 
         }
@@ -325,11 +328,11 @@ public class ReferenceAnnotationBeanPostProcessor extends InstantiationAwareBean
         ReferenceBean<?> referenceBean = referenceBeansCache.get(referenceBeanCacheKey);
 
         if (referenceBean == null) {
-
+            //创建ReferenceBeanBuilder 并配置接口信息
             ReferenceBeanBuilder beanBuilder = ReferenceBeanBuilder
                     .create(reference, classLoader, applicationContext)
                     .interfaceClass(referenceClass);
-
+            //创建referenceBean对象
             referenceBean = beanBuilder.build();
 
             referenceBeansCache.putIfAbsent(referenceBeanCacheKey, referenceBean);

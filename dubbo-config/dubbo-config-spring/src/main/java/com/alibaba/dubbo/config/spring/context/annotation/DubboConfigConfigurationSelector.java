@@ -30,15 +30,15 @@ import org.springframework.core.type.AnnotationMetadata;
  * @since 2.5.8
  */
 public class DubboConfigConfigurationSelector implements ImportSelector, Ordered {
-
+    //AnnotationMetada定义了访问特定类的注解的抽象接口，它不需要加载该类即可访问。
     @Override
     public String[] selectImports(AnnotationMetadata importingClassMetadata) {
-
+        //获取EnableDubboConfig的属性
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboConfig.class.getName()));
 
         boolean multiple = attributes.getBoolean("multiple");
-
+        //根据multiple属性判断要加载的配置
         if (multiple) {
             return of(DubboConfigConfiguration.Multiple.class.getName());
         } else {

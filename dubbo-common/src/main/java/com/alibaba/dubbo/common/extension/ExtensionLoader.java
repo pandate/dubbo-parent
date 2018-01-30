@@ -824,11 +824,13 @@ public class ExtensionLoader<T> {
 
             Adaptive adaptiveAnnotation = method.getAnnotation(Adaptive.class);
             StringBuilder code = new StringBuilder(512);
+            //判断方法上是否有Adaptive注解没有直接拼接异常信息抛出
             if (adaptiveAnnotation == null) {
                 code.append("throw new UnsupportedOperationException(\"method ")
                         .append(method.toString()).append(" of interface ")
                         .append(type.getName()).append(" is not adaptive method!\");");
             } else {
+                //判断方法入参中的URL属性的位置
                 int urlTypeIndex = -1;
                 for (int i = 0; i < pts.length; ++i) {
                     if (pts[i].equals(URL.class)) {
@@ -836,7 +838,7 @@ public class ExtensionLoader<T> {
                         break;
                     }
                 }
-                // found parameter in URL type
+                //如果入参中有URL则判空然后赋值
                 if (urlTypeIndex != -1) {
                     // Null Point check
                     String s = String.format("\nif (arg%d == null) throw new IllegalArgumentException(\"url == null\");",
@@ -846,14 +848,15 @@ public class ExtensionLoader<T> {
                     s = String.format("\n%s url = arg%d;", URL.class.getName(), urlTypeIndex);
                     code.append(s);
                 }
-                // did not find parameter in URL type
+                // 如果入参中无URL
                 else {
                     String attribMethod = null;
 
-                    // find URL getter method
+                    // 查找入参对象
                     LBL_PTS:
                     for (int i = 0; i < pts.length; ++i) {
                         Method[] ms = pts[i].getMethods();
+                        //判断对象中的所有get方法返回值为URL的
                         for (Method m : ms) {
                             String name = m.getName();
                             if ((name.startsWith("get") || name.length() > 3)
@@ -867,12 +870,13 @@ public class ExtensionLoader<T> {
                             }
                         }
                     }
+                    //入参对象的属性中也没有URL直接抛异常
                     if (attribMethod == null) {
                         throw new IllegalStateException("fail to create adaptive class for interface " + type.getName()
                                 + ": not found url parameter or url attribute in parameters of method " + method.getName());
                     }
 
-                    // Null point check
+                    // 装配赋值语句
                     String s = String.format("\nif (arg%d == null) throw new IllegalArgumentException(\"%s argument == null\");",
                             urlTypeIndex, pts[urlTypeIndex].getName());
                     code.append(s);
@@ -883,9 +887,9 @@ public class ExtensionLoader<T> {
                     s = String.format("%s url = arg%d.%s();", URL.class.getName(), urlTypeIndex, attribMethod);
                     code.append(s);
                 }
-
+                //获取Adaptive的属性
                 String[] value = adaptiveAnnotation.value();
-                // value is not set, use the value generated from class name as the key
+                // 没有设置值，用类名作为默认值，转换逻辑:大写转小写前面加.   如SimpleExt转换后为simple.ext
                 if (value.length == 0) {
                     char[] charArray = type.getSimpleName().toCharArray();
                     StringBuilder sb = new StringBuilder(128);

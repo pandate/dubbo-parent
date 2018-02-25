@@ -51,6 +51,10 @@ public class DubboProtocolTest {
     @Test
     public void testDemoProtocol() throws Exception {
         DemoService service = new DemoServiceImpl();
+        /*
+            服务发布流程
+            通过代理工厂类生成具体服务的代理实现invoker
+         */
         protocol.export(proxy.getInvoker(service, DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange")));
         service = proxy.getProxy(protocol.refer(DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange")));
         assertEquals(service.getSize(new String[]{"", "", ""}), 3);

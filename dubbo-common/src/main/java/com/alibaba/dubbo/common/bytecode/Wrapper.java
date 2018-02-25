@@ -101,7 +101,7 @@ public abstract class Wrapper {
         }
         return ret;
     }
-
+    //创建装饰类
     private static Wrapper makeWrapper(Class<?> c) {
         if (c.isPrimitive())
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
@@ -125,7 +125,7 @@ public abstract class Wrapper {
         // get all public field.
         for (Field f : c.getFields()) {
             String fn = f.getName();
-            Class<?> ft = f.getType();
+                                                                                                                                                                                                                             Class<?> ft = f.getType();
             if (Modifier.isStatic(f.getModifiers()) || Modifier.isTransient(f.getModifiers()))
                 continue;
 
@@ -135,13 +135,14 @@ public abstract class Wrapper {
         }
 
         Method[] methods = c.getMethods();
-        // get all public method.
+        // 获取所有公共方法
         boolean hasMethod = hasMethods(methods);
         if (hasMethod) {
             c3.append(" try{");
         }
         for (Method m : methods) {
-            if (m.getDeclaringClass() == Object.class) //ignore Object's method.
+            //如果是Object的方法直接跳过
+            if (m.getDeclaringClass() == Object.class)
                 continue;
 
             String mn = m.getName();
@@ -235,7 +236,7 @@ public abstract class Wrapper {
 
         try {
             Class<?> wc = cc.toClass();
-            // setup static field.
+            // 设置静态属性值，静态属性传空对象可以赋值，非静态属性会抛异常
             wc.getField("pts").set(null, pts);
             wc.getField("pns").set(null, pts.keySet().toArray(new String[0]));
             wc.getField("mns").set(null, mns.toArray(new String[0]));

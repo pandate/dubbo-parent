@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 public class WrapperTest {
     @Test
     public void testMain() throws Exception {
+        //获取I1的装饰类
         Wrapper w = Wrapper.getWrapper(I1.class);
         String[] ns = w.getDeclaredMethodNames();
         assertEquals(ns.length, 5);

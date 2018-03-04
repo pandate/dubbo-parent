@@ -28,7 +28,10 @@ import java.lang.reflect.Method;
 
 public class ProxyTest extends TestCase {
     public void testMain() throws Exception {
-        Proxy proxy = Proxy.getProxy(ITest.class, ITest.class);
+        //创建代理类
+        //返回Proxy0_1对象
+        Proxy proxy = Proxy.getProxy(ITest.class);
+//        调用Proxy0_1的newInstance（InvocationHandler）方法创建proxy0对象
         ITest instance = (ITest) proxy.newInstance(new InvocationHandler() {
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 if ("getName".equals(method.getName())) {
@@ -41,6 +44,11 @@ public class ProxyTest extends TestCase {
                 return null;
             }
         });
+
+//        proxy0 proxy0=new proxy0(new InvocationHandler() {
+//            实现同上
+//        });
+//        proxy0.setName("qianlei","hello");
 
         assertNull(instance.getName());
         instance.setName("qianlei", "hello");

@@ -20,6 +20,7 @@ package com.alibaba.dubbo.rpc.protocol.dubbo;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.extension.ExtensionLoader;
+import com.alibaba.dubbo.rpc.Invoker;
 import com.alibaba.dubbo.rpc.Protocol;
 import com.alibaba.dubbo.rpc.ProxyFactory;
 import com.alibaba.dubbo.rpc.RpcException;
@@ -45,17 +46,21 @@ import static junit.framework.Assert.assertEquals;
  */
 
 public class DubboProtocolTest {
+    //通过SPI方式获取Protocol适配类同时增加了ProtocolFilterWrapper和ProtocolListenerWrapper的装饰
     private Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
+    //具体的代理实现工厂为JavassistProxyFactory同时使用了StubProxyFactoryWrapper类进行装饰
     private ProxyFactory proxy = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
 
     @Test
     public void testDemoProtocol() throws Exception {
         DemoService service = new DemoServiceImpl();
-        /*
-            服务发布流程
-            通过代理工厂类生成具体服务的代理实现invoker
-         */
-        protocol.export(proxy.getInvoker(service, DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange")));
+
+         //   服务发布流程
+         //   通过代理层工厂类装饰服务发布的实现invoker
+        Invoker invoker = proxy.getInvoker(service, DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange"));
+        //    protocol适配类先调用两个装饰类的export方法然后根据SPI注解进行适配调用DubboProtocol的export方法
+        //    这里可以明显的看出代理模式和装饰模式的区别，服务发布时是将对象进行装饰而代理模式时不需要传入对象只需要接口就行了
+        protocol.export(invoker);
         service = proxy.getProxy(protocol.refer(DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange")));
         assertEquals(service.getSize(new String[]{"", "", ""}), 3);
     }

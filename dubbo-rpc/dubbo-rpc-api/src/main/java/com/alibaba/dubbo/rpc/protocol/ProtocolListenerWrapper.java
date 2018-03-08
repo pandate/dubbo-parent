@@ -37,9 +37,11 @@ import java.util.Collections;
 public class ProtocolListenerWrapper implements Protocol {
     static {
         try {
+            //创建Server对象
             Class serverClass = Protocol.class.getClassLoader().loadClass("com.alibaba.dubbo.qos.server.Server");
             Method serverGetInstanceMethod = serverClass.getMethod("getInstance");
             Object serverInstance = serverGetInstanceMethod.invoke(null);
+            //调用start方法
             Method startMethod = serverClass.getMethod("start");
             startMethod.invoke(serverInstance);
         }catch (Throwable throwable){

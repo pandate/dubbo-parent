@@ -88,6 +88,7 @@ public class Server {
         serverBootstrap.channel(NioServerSocketChannel.class);
         serverBootstrap.childOption(ChannelOption.TCP_NODELAY, true);
         serverBootstrap.childOption(ChannelOption.SO_REUSEADDR, true);
+        //添加处理者
         serverBootstrap.childHandler(new ChannelInitializer<Channel>() {
 
             @Override

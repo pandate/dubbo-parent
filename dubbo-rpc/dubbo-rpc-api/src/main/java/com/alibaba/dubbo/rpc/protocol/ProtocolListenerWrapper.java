@@ -45,7 +45,7 @@ public class ProtocolListenerWrapper implements Protocol {
             Method startMethod = serverClass.getMethod("start");
             startMethod.invoke(serverInstance);
         }catch (Throwable throwable){
-
+            throwable.printStackTrace();
         }
 
     }

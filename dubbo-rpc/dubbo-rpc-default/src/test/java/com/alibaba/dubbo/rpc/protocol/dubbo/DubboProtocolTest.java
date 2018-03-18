@@ -46,7 +46,7 @@ import static junit.framework.Assert.assertEquals;
  */
 
 public class DubboProtocolTest {
-    //通过SPI方式获取Protocol适配类同时增加了ProtocolFilterWrapper和ProtocolListenerWrapper的装饰
+    //通过SPI方式获取Protocol适配类
     private Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
     //具体的代理实现工厂为JavassistProxyFactory同时使用了StubProxyFactoryWrapper类进行装饰
     private ProxyFactory proxy = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
@@ -55,13 +55,32 @@ public class DubboProtocolTest {
     public void testDemoProtocol() throws Exception {
         DemoService service = new DemoServiceImpl();
 
-         //   服务发布流程
-         //   通过代理层工厂类装饰服务发布的实现invoker
+        //服务暴露流程
+        //通过代理层工厂类装饰服务发布的实现invoker
         Invoker invoker = proxy.getInvoker(service, DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange"));
-        //    protocol适配类先调用两个装饰类的export方法然后根据SPI注解进行适配调用DubboProtocol的export方法
-        //    这里可以明显的看出代理模式和装饰模式的区别，服务发布时是将对象进行装饰而代理模式时不需要传入对象只需要接口就行了
+        //protocol适配类先调用两个装饰类的export方法然后根据SPI注解进行适配调用DubboProtocol的export方法
+        //1.调用装饰实现类ProtocolFilterWrapper 创建invoker装饰实现链对invoker进行功能增强
+        //EchoFilter:返回过滤器，判断是否有返回值有则封装成RpcResult返回
+        //ClassLoaderFilter:类加载器过滤器，替换当前进程的ClassLoader为invoker的接口的CLassLoader执行完invoke后替换回来
+        //GenericFilter:泛化过滤器， 泛接口调用方式主要用于客户端没有API接口及模型类元的情况，参数及返回值中的所有POJO均用Map表示
+        //ContextFilter:上下文过滤器,在上下文中过滤掉部分dubbo参数，将报文中的数据放入RpcContent中
+        //前四个过滤器使用了注解定义了顺序后续的三个未指定顺序
+        //TraceFilter:跟踪过滤器，记录调用次数
+        //TimeoutFilter:超时过滤器，只做了调用超时的记录不停止业务
+        //ExceptionFilter:异常过滤器，封装了部分内部异常处理
+        //2.调用装饰实现类ProtocolListenerWrapper 为Exporter进行装饰增加了监听功能 提供了服务发布与注销时的行为监听可以实现ExporterListener接口进行功能扩展
+        //3.调用Protocol$Adaptive类根据SPI适配逻辑调用了DubboProtocol的export方法创建服务
         protocol.export(invoker);
-        service = proxy.getProxy(protocol.refer(DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange")));
+
+        //dubbo服务发现流程
+        //protocol适配类先调用两个装饰类的refer方法然后根据SPI注解进行适配调用DubboProtocol的refer方法
+        //1.调用装饰实现类ProtocolFilterWrapper 创建invoker装饰实现链对invoker进行功能增强
+        //FutureFilter:Future模式的过滤器，异步并发处理过滤器 dubbo使用了netty的nio方式进行网络传输，所以dubbo的同步只是调用方一直处于等待返回
+        //ConsumerContextFilter：消费端上下文过滤器，设置consumer调用的上下文，如本地地址，要调用的provider的地址，invoker信息，invocation信息等。RpcContext通过ThreadLocal实现，因此你可以在业务代码中直接通过RpcContext获取上下文信息(在调用对应方法之后才能获取)。需要注意的是RpcContext中的attachments中的内容在后面的远程调用中被传到provider，不建议业务使用，可以考虑traceId之类的数据传递，由于每次调用完成后都会进行清理，因此需要传递的数据每次调用都要重新设置。
+        //2.调用装饰实现类ProtocolListenerWrapper 为Invoker进行装饰增加了监听功能 提供了服务发现与销毁时的行为监听可以实现InvokerListener接口进行功能扩展
+        //3.调用DubboProtocol的refer方法创建Invoker
+        Invoker<DemoService> demoServiceInvoker = protocol.refer(DemoService.class, URL.valueOf("dubbo://127.0.0.1:9020/" + DemoService.class.getName() + "?codec=exchange"));
+        service = proxy.getProxy(demoServiceInvoker);
         assertEquals(service.getSize(new String[]{"", "", ""}), 3);
     }
 

@@ -217,13 +217,12 @@ public class DubboProtocol extends AbstractProtocol {
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         URL url = invoker.getUrl();
 
-        // export service.
         //获取服务名,组成逻辑 组名/服务路径:版本:端口 组名和版本没有就不填
         String key = serviceKey(url);
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
         exporterMap.put(key, exporter);
 
-        //export an stub service for dispatching event
+        //判断是否使用本地存根
         Boolean isStubSupportEvent = url.getParameter(Constants.STUB_EVENT_KEY, Constants.DEFAULT_STUB_EVENT);
         Boolean isCallbackservice = url.getParameter(Constants.IS_CALLBACK_SERVICE, false);
         if (isStubSupportEvent && !isCallbackservice) {
@@ -237,23 +236,24 @@ public class DubboProtocol extends AbstractProtocol {
                 stubServiceMethodsMap.put(url.getServiceKey(), stubServiceMethods);
             }
         }
-
+        //开启服务
         openServer(url);
 
         return exporter;
     }
 
     private void openServer(URL url) {
-        // find server.
+
         String key = url.getAddress();
-        //client can export a service which's only for server to invoke
+        //判断是否为服务，默认为服务
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         if (isServer) {
             ExchangeServer server = serverMap.get(key);
             if (server == null) {
+                //创建服务
                 serverMap.put(key, createServer(url));
             } else {
-                // server supports reset, use together with override
+                // 服务已存在则重置
                 server.reset(url);
             }
         }
@@ -262,9 +262,9 @@ public class DubboProtocol extends AbstractProtocol {
         根据URL创建服务
      */
     private ExchangeServer createServer(URL url) {
-        // send readonly event when server closes, it's enabled by default
+        // 添加默认异步发送操作
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());
-        // enable heartbeat by default
+        // 添加默认心跳服务开启参数
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
         String str = url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_SERVER);
 
@@ -274,9 +274,7 @@ public class DubboProtocol extends AbstractProtocol {
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
         try {
-            //创建一个HeaderExchangeServer
-            //HeaderExchangeServer 包装了一个Transporter并实现了心跳检测
-            //Transporter 默认创建一个nettyServer
+            //绑定服务
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
@@ -347,7 +345,7 @@ public class DubboProtocol extends AbstractProtocol {
      */
     private ExchangeClient initClient(URL url) {
 
-        // client type setting.
+        // 指定客户端连接方式默认为Netty
         String str = url.getParameter(Constants.CLIENT_KEY, url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_CLIENT));
 
         String version = url.getParameter(Constants.DUBBO_VERSION_KEY);

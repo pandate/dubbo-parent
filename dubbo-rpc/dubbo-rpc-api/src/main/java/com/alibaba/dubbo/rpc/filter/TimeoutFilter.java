@@ -32,6 +32,7 @@ import java.util.Arrays;
  * Log any invocation timeout, but don't stop server from running
  */
 @Activate(group = Constants.PROVIDER)
+//超时过滤器，只做了调用超时的日志记录不停止业务
 public class TimeoutFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeoutFilter.class);

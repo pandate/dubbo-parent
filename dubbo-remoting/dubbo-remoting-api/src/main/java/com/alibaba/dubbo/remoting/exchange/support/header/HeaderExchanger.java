@@ -37,8 +37,13 @@ public class HeaderExchanger implements Exchanger {
     public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
-
+    //绑定服务
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
+        //HeaderExchangeHandler对handler进行了装饰，对请求头进行了处理
+        //DecodeHandler对headerExchangeHandler进行了装饰，对消息进行了解码处理
+        //生成了Transporter$Adaptive适配器根据url选择需要的Transporter默认使用netty
+        //调用NettyTransporter new NettyServer(url, listener)创建了netty服务
+        //创建HeaderExchangeServer 开启心跳服务
         return new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
     }
 

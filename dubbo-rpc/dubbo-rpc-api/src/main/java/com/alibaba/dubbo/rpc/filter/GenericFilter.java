@@ -47,6 +47,8 @@ import java.lang.reflect.Method;
 @Activate(group = Constants.PROVIDER, order = -20000)
 public class GenericFilter implements Filter {
 
+
+    //泛化调用，无须将model和api暴露出去，服务消费方只需要知道调用的接口名称、方法名、参数、参数类型等等就可以实现远程调用。
     public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
         if (inv.getMethodName().equals(Constants.$INVOKE)
                 && inv.getArguments() != null
